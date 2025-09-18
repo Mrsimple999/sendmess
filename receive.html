@@ -2,14 +2,39 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Đang chuyển hướng...</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nhận tin nhắn</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      background: #f7fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      color: #1e293b;
+    }
+    .card {
+      width: 92%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      padding: 20px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    #msg { word-break: break-all; font-size: 16px; margin-bottom: 14px; }
+    #status { font-size: 15px; color: #64748b; }
   </style>
 </head>
 <body>
-  <p id="status">⏳ Đang chờ tin nhắn...</p>
+  <div class="card">
+    <h2>📥 Nhận tin nhắn</h2>
+    <div id="msg">⏳ Đang chờ tin nhắn...</div>
+    <div id="status">Kết nối Realtime Database...</div>
+  </div>
 
   <script type="module">
     const firebaseConfig = { 
@@ -28,41 +53,47 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    const msgEl = document.getElementById("msg");
     const statusEl = document.getElementById("status");
-    const latestRef = ref(db, "messages/latest");
 
     // Hàm mở link/app
     function openLink(url) {
+      // Nếu là http/https → Safari sẽ tự nhảy app nếu là Universal Link
       if (/^https?:\/\//i.test(url)) {
-        // Link web hoặc universal link
         window.location.replace(url);
-      } else if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
-        // Custom scheme (zalo://, fb://, myapp://...)
+      } 
+      // Nếu là custom scheme → thử mở (iOS mới có thể chặn)
+      else if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
         let iframe = document.createElement("iframe");
         iframe.style.display = "none";
         iframe.src = url;
         document.body.appendChild(iframe);
 
-        // fallback sau 1.5s (tùy chỉnh theo app)
+        // fallback sang web nếu app không mở
         setTimeout(() => {
           if (url.startsWith("zalo://")) window.location.href = "https://zalo.me/";
           else if (url.startsWith("fb://")) window.location.href = "https://facebook.com/";
         }, 1500);
-      } else {
-        statusEl.textContent = "Nội dung không phải link: " + url;
       }
     }
 
     // Lắng nghe realtime
+    const latestRef = ref(db, "messages/latest");
     onValue(latestRef, (snapshot) => {
       const data = snapshot.val();
-      if (!data || !data.message) {
-        statusEl.textContent = "⚠ Chưa có tin nhắn nào.";
-        return;
+      if (data && data.message) {
+        const text = data.message.trim();
+        msgEl.textContent = text;
+        statusEl.textContent = "🔗 Đang mở...";
+        openLink(text);
+      } else {
+        msgEl.textContent = "⚠ Chưa có tin nhắn.";
+        statusEl.textContent = "";
       }
-      const text = data.message.trim();
-      statusEl.textContent = "Đang mở: " + text;
-      openLink(text);
+    }, (error) => {
+      console.error(error);
+      msgEl.textContent = "❌ Lỗi kết nối Database.";
+      statusEl.textContent = error.message;
     });
   </script>
 </body>
