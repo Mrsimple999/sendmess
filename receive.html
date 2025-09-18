@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nhận tin nhắn</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; }
+    #status { font-size: 16px; color: #1e293b; }
+  </style>
+</head>
+<body>
+  <p id="status">⏳ Đang chờ tin nhắn...</p>
+
+  <script type="module">
+    // 🔑 Cấu hình Firebase của bạn (lấy trong Firebase Console)
+   const firebaseConfig = {
+  apiKey: "AIzaSyA65WcjNrWLQrOSUtNp_hhhyU9_K1RpOuY",
+  authDomain: "sendmess-edc57.firebaseapp.com",
+  databaseURL: "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sendmess-edc57",
+  storageBucket: "sendmess-edc57.firebasestorage.app",
+  messagingSenderId: "947952161441",
+  appId: "1:947952161441:web:b603397bbefbe72e2656e0"
+};
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const statusEl = document.getElementById("status");
+    const latestRef = ref(db, "messages/latest");
+
+    function isLink(text) {
+      return /^https?:\/\//i.test(text) || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(text);
+    }
+
+    // Lắng nghe realtime → khi có update sẽ tự trigger trên tất cả máy
+    onValue(latestRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data || !data.message) {
+        statusEl.textContent = "❌ Chưa có tin nhắn.";
+        return;
+      }
+      const msg = data.message.trim();
+      statusEl.textContent = "📩 Nhận: " + msg;
+
+      if (isLink(msg)) {
+        // Redirect ngay (mỗi máy mở receive.html sẽ cùng nhảy)
+        window.location.replace(msg);
+      }
+    });
+  </script>
+</body>
+</html>
