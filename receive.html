@@ -37,8 +37,7 @@
   </div>
 
   <script type="module">
-    // 🔑 Firebase Config (lấy từ Firebase console → Project settings → SDK setup)
-   const firebaseConfig = { 
+    const firebaseConfig = { 
   apiKey : "AIzaSyA65WcjNrWLQrOSUtNp_hhhyU9_K1RpOuY" , 
   authDomain : "sendmess-edc57.firebaseapp.com" , 
   databaseURL : "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app" , 
@@ -57,6 +56,28 @@
     const msgEl = document.getElementById("msg");
     const statusEl = document.getElementById("status");
 
+    // Hàm mở app hoặc web
+    function openLink(url) {
+      // Nếu là http/https → redirect thẳng
+      if (/^https?:\/\//i.test(url)) {
+        window.location.replace(url);
+        return;
+      }
+
+      // Nếu là scheme (app://, zalo://, fb:// ...)
+      let iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+
+      // fallback: sau 1500ms mở web nếu có
+      setTimeout(() => {
+        // Ví dụ: nếu gửi zalo:// thì fallback zalo.me
+        if (url.startsWith("zalo://")) window.location.href = "https://zalo.me/";
+        else if (url.startsWith("fb://")) window.location.href = "https://facebook.com/";
+      }, 1500);
+    }
+
     // Lắng nghe thay đổi realtime
     const latestRef = ref(db, "messages/latest");
     onValue(latestRef, (snapshot) => {
@@ -65,19 +86,14 @@
         const text = data.message.trim();
         msgEl.textContent = text;
 
-        // nếu là link (http/https hoặc app://) → redirect ngay
-        if (/^https?:\/\/|^[a-zA-Z0-9\-]+:\/\//.test(text)) {
-          statusEl.textContent = "🔗 Đang mở ứng dụng/link...";
-          window.location.replace(text);
-        } else {
-          statusEl.textContent = "✔ Nhận tin nhắn thành công (không phải link).";
-        }
+        // thử mở ngay
+        openLink(text);
+        statusEl.textContent = "🔗 Đang chuyển hướng...";
       } else {
         msgEl.textContent = "⚠ Chưa có tin nhắn.";
         statusEl.textContent = "";
       }
     }, (error) => {
-      console.error(error);
       msgEl.textContent = "❌ Lỗi kết nối Database.";
       statusEl.textContent = error.message;
     });
