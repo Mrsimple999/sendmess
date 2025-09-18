@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gửi tin nhắn</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      background: #f7fafc;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+    textarea {
+      flex: 1;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      resize: none;
+      margin-bottom: 12px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .actions button {
+      flex: 1;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    #pasteBtn { background: #6b7280; color: white; }
+    #sendBtn { background: #2563eb; color: white; }
+    #info { font-size: 14px; color: #334155; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>✉️ Gửi tin nhắn</h2>
+    <textarea id="msg" placeholder="Nhập tin nhắn hoặc URL..."></textarea>
+    <div class="actions">
+      <button id="pasteBtn">📋 Dán</button>
+      <button id="sendBtn">🚀 Gửi</button>
+    </div>
+    <div id="info"></div>
+  </div>
+
+  <script>
+    const DATABASE_URL = "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app/";
+    const endpoint = DATABASE_URL + "/messages/latest.json";
+
+    const msgEl = document.getElementById("msg");
+    const pasteBtn = document.getElementById("pasteBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const info = document.getElementById("info");
+
+    // 📋 Nút dán từ clipboard
+    pasteBtn.addEventListener("click", async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          msgEl.value = text;
+          info.textContent = "✔ Đã dán từ clipboard.";
+        } else {
+          info.textContent = "⚠ Clipboard trống.";
+        }
+      } catch (err) {
+        console.error(err);
+        info.textContent = "❌ Safari chưa cho phép đọc clipboard. Hãy chấp nhận lần đầu.";
+      }
+    });
+
+    // 🚀 Gửi tin nhắn
+    sendBtn.addEventListener("click", async () => {
+      const txt = msgEl.value.trim();
+      if (!txt) {
+        alert("Vui lòng nhập tin nhắn!");
+        return;
+      }
+      sendBtn.disabled = true;
+      sendBtn.textContent = "⏳ Đang gửi...";
+      info.textContent = "";
+
+      try {
+        const body = { message: txt, createdAt: Date.now() };
+        const res = await fetch(endpoint, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        info.innerHTML = '✔ Tin nhắn đã gửi! <br> Người nhận mở: <a href="receive.html" target="_blank">receive.html</a>';
+      } catch (err) {
+        console.error(err);
+        info.textContent = "❌ Lỗi gửi: " + err.message;
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "🚀 Gửi";
+      }
+    });
+  </script>
+</body>
+</html>
