@@ -5,23 +5,47 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Nhận tin nhắn</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; }
-    #status { font-size: 16px; color: #1e293b; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      background: #f7fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      color: #1e293b;
+    }
+    .card {
+      width: 92%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      padding: 20px;
+    }
+    h2 { margin: 0 0 16px; font-size: 20px; }
+    #msg { word-break: break-all; font-size: 16px; margin-bottom: 14px; }
+    #status { font-size: 15px; color: #64748b; }
   </style>
 </head>
 <body>
-  <p id="status">⏳ Đang chờ tin nhắn...</p>
+  <div class="card">
+    <h2>📥 Nhận tin nhắn</h2>
+    <div id="msg">⏳ Đang chờ tin nhắn...</div>
+    <div id="status">Kết nối Realtime Database...</div>
+  </div>
 
   <script type="module">
-    // 🔑 Cấu hình Firebase của bạn (lấy trong Firebase Console)
-   const firebaseConfig = {
-  apiKey: "AIzaSyA65WcjNrWLQrOSUtNp_hhhyU9_K1RpOuY",
-  authDomain: "sendmess-edc57.firebaseapp.com",
-  databaseURL: "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sendmess-edc57",
-  storageBucket: "sendmess-edc57.firebasestorage.app",
-  messagingSenderId: "947952161441",
-  appId: "1:947952161441:web:b603397bbefbe72e2656e0"
+    // 🔑 Firebase Config (lấy từ Firebase console → Project settings → SDK setup)
+   const firebaseConfig = { 
+  apiKey : "AIzaSyA65WcjNrWLQrOSUtNp_hhhyU9_K1RpOuY" , 
+  authDomain : "sendmess-edc57.firebaseapp.com" , 
+  databaseURL : "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app" , 
+  projectId : "sendmess-edc57" , 
+  storageBucket : "sendmess-edc57.firebasestorage.app" , 
+  messagingSenderId : "947952161441" , 
+  appId : "1:947952161441:web:b603397bbefbe72e2656e0" 
 };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
@@ -30,27 +54,32 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    const msgEl = document.getElementById("msg");
     const statusEl = document.getElementById("status");
+
+    // Lắng nghe thay đổi realtime
     const latestRef = ref(db, "messages/latest");
-
-    function isLink(text) {
-      return /^https?:\/\//i.test(text) || /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(text);
-    }
-
-    // Lắng nghe realtime → khi có update sẽ tự trigger trên tất cả máy
     onValue(latestRef, (snapshot) => {
       const data = snapshot.val();
-      if (!data || !data.message) {
-        statusEl.textContent = "❌ Chưa có tin nhắn.";
-        return;
-      }
-      const msg = data.message.trim();
-      statusEl.textContent = "📩 Nhận: " + msg;
+      if (data && data.message) {
+        const text = data.message.trim();
+        msgEl.textContent = text;
 
-      if (isLink(msg)) {
-        // Redirect ngay (mỗi máy mở receive.html sẽ cùng nhảy)
-        window.location.replace(msg);
+        // nếu là link (http/https hoặc app://) → redirect ngay
+        if (/^https?:\/\/|^[a-zA-Z0-9\-]+:\/\//.test(text)) {
+          statusEl.textContent = "🔗 Đang mở ứng dụng/link...";
+          window.location.replace(text);
+        } else {
+          statusEl.textContent = "✔ Nhận tin nhắn thành công (không phải link).";
+        }
+      } else {
+        msgEl.textContent = "⚠ Chưa có tin nhắn.";
+        statusEl.textContent = "";
       }
+    }, (error) => {
+      console.error(error);
+      msgEl.textContent = "❌ Lỗi kết nối Database.";
+      statusEl.textContent = error.message;
     });
   </script>
 </body>
