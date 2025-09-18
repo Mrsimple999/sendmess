@@ -14,58 +14,68 @@
       justify-content: center;
       height: 100vh;
     }
-    .container {
-      width: 90%;
-      max-width: 400px;
+    .card {
+      width: 92%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      padding: 20px;
       text-align: center;
+    }
+    h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #1e293b;
     }
     textarea {
       width: 100%;
       height: 80px; /* nhỏ gọn */
       font-size: 16px;
       padding: 10px;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid #d1d5db;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       resize: none;
     }
     .actions {
       display: flex;
-      gap: 10px;
-      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
     }
     .actions button {
-      flex: 1;
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 10px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 600;
+      border-radius: 12px;
       border: none;
       cursor: pointer;
+      width: 100%;
     }
-    #pasteBtn { background: #6b7280; color: white; }
-    #sendBtn { background: #2563eb; color: white; }
+    #pasteBtn { background: #6b7280; color: #fff; }
+    #sendBtn { background: #2563eb; color: #fff; }
     #info {
-      font-size: 14px;
+      font-size: 15px;
       color: #334155;
-      margin-top: 12px;
-      min-height: 20px;
+      margin-top: 14px;
+      min-height: 24px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="card">
     <h2>✉️ Gửi tin nhắn</h2>
     <textarea id="msg" placeholder="Nhập tin nhắn hoặc URL..."></textarea>
     <div class="actions">
-      <button id="pasteBtn">📋 Dán</button>
-      <button id="sendBtn">🚀 Gửi</button>
+      <button id="pasteBtn">📋 Dán từ Clipboard</button>
+      <button id="sendBtn">🚀 Gửi tin nhắn</button>
     </div>
     <div id="info"></div>
   </div>
 
   <script>
-    // 👇 THAY đường link database của bạn ở đây
-    // vào Firebase Console → Realtime Database → "Data" → Copy URL (kết thúc bằng .asia-southeast1.firebasedatabase.app)
+    // 🔑 Thay link database của bạn tại đây
     const DATABASE_URL = "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app/";
     const endpoint = DATABASE_URL + "/messages/latest.json";
 
@@ -74,7 +84,7 @@
     const sendBtn = document.getElementById("sendBtn");
     const info = document.getElementById("info");
 
-    // 📋 Dán từ clipboard khi user bấm nút
+    // 📋 Nút dán từ clipboard
     pasteBtn.addEventListener("click", async () => {
       try {
         const text = await navigator.clipboard.readText();
@@ -109,13 +119,13 @@
           body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
-        info.innerHTML = '✔ Tin nhắn đã gửi! Người nhận mở: <a href="receive.html" target="_blank">receive.html</a>';
+        info.innerHTML = '✔ Tin nhắn đã gửi!<br>Người nhận mở: <a href="receive.html" target="_blank">receive.html</a>';
       } catch (err) {
         console.error(err);
         info.textContent = "❌ Lỗi gửi: " + err.message;
       } finally {
         sendBtn.disabled = false;
-        sendBtn.textContent = "🚀 Gửi";
+        sendBtn.textContent = "🚀 Gửi tin nhắn";
       }
     });
   </script>
