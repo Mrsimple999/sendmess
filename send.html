@@ -10,28 +10,29 @@
       margin: 0;
       background: #f7fafc;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       height: 100vh;
     }
     .container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
     }
     textarea {
-      flex: 1;
+      width: 100%;
+      height: 80px; /* nhỏ gọn */
       font-size: 16px;
-      padding: 12px;
+      padding: 10px;
       border-radius: 10px;
       border: 1px solid #d1d5db;
+      margin-bottom: 16px;
       resize: none;
-      margin-bottom: 12px;
     }
     .actions {
       display: flex;
       gap: 10px;
-      margin-bottom: 10px;
+      justify-content: center;
     }
     .actions button {
       flex: 1;
@@ -43,7 +44,12 @@
     }
     #pasteBtn { background: #6b7280; color: white; }
     #sendBtn { background: #2563eb; color: white; }
-    #info { font-size: 14px; color: #334155; margin-top: 8px; }
+    #info {
+      font-size: 14px;
+      color: #334155;
+      margin-top: 12px;
+      min-height: 20px;
+    }
   </style>
 </head>
 <body>
@@ -58,6 +64,8 @@
   </div>
 
   <script>
+    // 👇 THAY đường link database của bạn ở đây
+    // vào Firebase Console → Realtime Database → "Data" → Copy URL (kết thúc bằng .asia-southeast1.firebasedatabase.app)
     const DATABASE_URL = "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app/";
     const endpoint = DATABASE_URL + "/messages/latest.json";
 
@@ -66,7 +74,7 @@
     const sendBtn = document.getElementById("sendBtn");
     const info = document.getElementById("info");
 
-    // 📋 Nút dán từ clipboard
+    // 📋 Dán từ clipboard khi user bấm nút
     pasteBtn.addEventListener("click", async () => {
       try {
         const text = await navigator.clipboard.readText();
@@ -77,12 +85,12 @@
           info.textContent = "⚠ Clipboard trống.";
         }
       } catch (err) {
-        console.error(err);
-        info.textContent = "❌ Safari chưa cho phép đọc clipboard. Hãy chấp nhận lần đầu.";
+        console.error("Clipboard error:", err);
+        info.textContent = "❌ Safari chưa cho phép dán. Hãy thử lại và chấp nhận quyền.";
       }
     });
 
-    // 🚀 Gửi tin nhắn
+    // 🚀 Gửi tin nhắn vào Firebase
     sendBtn.addEventListener("click", async () => {
       const txt = msgEl.value.trim();
       if (!txt) {
@@ -101,7 +109,7 @@
           body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error("HTTP " + res.status);
-        info.innerHTML = '✔ Tin nhắn đã gửi! <br> Người nhận mở: <a href="receive.html" target="_blank">receive.html</a>';
+        info.innerHTML = '✔ Tin nhắn đã gửi! Người nhận mở: <a href="receive.html" target="_blank">receive.html</a>';
       } catch (err) {
         console.error(err);
         info.textContent = "❌ Lỗi gửi: " + err.message;
