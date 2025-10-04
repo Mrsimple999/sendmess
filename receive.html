@@ -27,44 +27,6 @@
     h2 { margin: 0 0 16px; font-size: 20px; }
     #msg { word-break: break-all; font-size: 16px; margin-bottom: 14px; }
     #status { font-size: 15px; color: #64748b; }
-
-    /* Popup */
-    .popup {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .popup-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 350px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-    .popup-content p {
-      font-size: 16px;
-      margin-bottom: 20px;
-      word-break: break-all;
-    }
-    .popup-content button {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      background: #2563eb;
-      color: #fff;
-      font-size: 15px;
-      cursor: pointer;
-    }
-    .popup-content button:hover {
-      background: #1e40af;
-    }
   </style>
 </head>
 <body>
@@ -72,14 +34,6 @@
     <h2>📥 Nhận tin nhắn</h2>
     <div id="msg">⏳ Đang chờ tin nhắn...</div>
     <div id="status">Kết nối Realtime Database...</div>
-  </div>
-
-  <!-- Popup -->
-  <div id="popup" class="popup">
-    <div class="popup-content">
-      <p id="popup-text"></p>
-      <button id="popup-btn">Mở liên kết</button>
-    </div>
   </div>
 
   <script type="module">
@@ -102,21 +56,27 @@
     const msgEl = document.getElementById("msg");
     const statusEl = document.getElementById("status");
 
-    const popup = document.getElementById("popup");
-    const popupText = document.getElementById("popup-text");
-    const popupBtn = document.getElementById("popup-btn");
-
-    let currentUrl = null;
-
-    function openLink(url) {
-      if (/^https?:\/\//i.test(url)) {
-        window.location.href = url;
-      } else if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
-        window.location.href = url;
+    // Hàm hiển thị thông báo hệ thống
+    function showNotification(message, url) {
+      if (Notification.permission === "granted") {
+        const notif = new Notification("📩 Tin nhắn mới", {
+          body: message,
+          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827370.png" // icon tuỳ chỉnh
+        });
+        notif.onclick = () => {
+          if (url) window.open(url, "_blank");
+        };
+      } else {
+        console.log("⚠ Người dùng chưa cấp quyền Notification");
       }
     }
 
-    // Lắng nghe realtime
+    // Xin quyền thông báo khi load trang
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+
+    // Lắng nghe realtime từ Firebase
     const latestRef = ref(db, "messages/latest");
     onValue(latestRef, (snapshot) => {
       const data = snapshot.val();
@@ -125,10 +85,8 @@
         msgEl.textContent = text;
         statusEl.textContent = "📩 Đã nhận tin nhắn";
 
-        // Gán vào popup
-        currentUrl = text;
-        popupText.textContent = text;
-        popup.style.display = "flex";
+        // Gọi thông báo hệ thống
+        showNotification(text, text);
       } else {
         msgEl.textContent = "⚠ Chưa có tin nhắn.";
         statusEl.textContent = "";
@@ -137,12 +95,6 @@
       console.error(error);
       msgEl.textContent = "❌ Lỗi kết nối Database.";
       statusEl.textContent = error.message;
-    });
-
-    // Khi bấm nút mở
-    popupBtn.addEventListener("click", () => {
-      if (currentUrl) openLink(currentUrl);
-      popup.style.display = "none";
     });
   </script>
 </body>
