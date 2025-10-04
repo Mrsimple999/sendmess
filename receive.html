@@ -38,14 +38,14 @@
 
   <script type="module">
     const firebaseConfig = { 
-      apiKey : "AIzaSyA65WcjNrWLQrOSUtNp_hhhyU9_K1RpOuY", 
-      authDomain : "sendmess-edc57.firebaseapp.com", 
-      databaseURL : "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app", 
-      projectId : "sendmess-edc57", 
-      storageBucket : "sendmess-edc57.firebasestorage.app", 
-      messagingSenderId : "947952161441", 
-      appId : "1:947952161441:web:b603397bbefbe72e2656e0" 
-    };
+  apiKey : "AIzaSyA65WcjNrWLQrOSUtNp_hhhyU9_K1RpOuY" , 
+  authDomain : "sendmess-edc57.firebaseapp.com" , 
+  databaseURL : "https://sendmess-edc57-default-rtdb.asia-southeast1.firebasedatabase.app" , 
+  projectId : "sendmess-edc57" , 
+  storageBucket : "sendmess-edc57.firebasestorage.app" , 
+  messagingSenderId : "947952161441" , 
+  appId : "1:947952161441:web:b603397bbefbe72e2656e0" 
+};
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -56,37 +56,36 @@
     const msgEl = document.getElementById("msg");
     const statusEl = document.getElementById("status");
 
-    // Hàm hiển thị thông báo hệ thống
-    function showNotification(message, url) {
-      if (Notification.permission === "granted") {
-        const notif = new Notification("📩 Tin nhắn mới", {
-          body: message,
-          icon: "https://cdn-icons-png.flaticon.com/512/1827/1827370.png" // icon tuỳ chỉnh
-        });
-        notif.onclick = () => {
-          if (url) window.open(url, "_blank");
-        };
-      } else {
-        console.log("⚠ Người dùng chưa cấp quyền Notification");
+    // Hàm mở link/app
+    function openLink(url) {
+      // Nếu là http/https → Safari sẽ tự nhảy app nếu là Universal Link
+      if (/^https?:\/\//i.test(url)) {
+        window.location.replace(url);
+      } 
+      // Nếu là custom scheme → thử mở (iOS mới có thể chặn)
+      else if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
+        let iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = url;
+        document.body.appendChild(iframe);
+
+        // fallback sang web nếu app không mở
+        setTimeout(() => {
+          if (url.startsWith("zalo://")) window.location.href = "https://zalo.me/";
+          else if (url.startsWith("fb://")) window.location.href = "https://facebook.com/";
+        }, 1500);
       }
     }
 
-    // Xin quyền thông báo khi load trang
-    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
-    }
-
-    // Lắng nghe realtime từ Firebase
+    // Lắng nghe realtime
     const latestRef = ref(db, "messages/latest");
     onValue(latestRef, (snapshot) => {
       const data = snapshot.val();
       if (data && data.message) {
         const text = data.message.trim();
         msgEl.textContent = text;
-        statusEl.textContent = "📩 Đã nhận tin nhắn";
-
-        // Gọi thông báo hệ thống
-        showNotification(text, text);
+        statusEl.textContent = "🔗 Đang mở...";
+        openLink(text);
       } else {
         msgEl.textContent = "⚠ Chưa có tin nhắn.";
         statusEl.textContent = "";
